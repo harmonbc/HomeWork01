@@ -18,9 +18,13 @@ public:
 	void update();
 	void draw();
 	void prepareSettings(Settings* settings);
-	void fadingBackground(uint8_t* pixlie);
-	void drawInvertSquares(uint8_t* pixles);
-	void drawInvertCircle(uint8_t* pixles, int r);
+	void fadingBackground(uint8_t* pixels);
+	void drawInvertSquares(uint8_t* pixels);
+	void drawInvertCircle(uint8_t* pixels, int center_x, int center_y, int r, Color8u c);
+	void addTint(uint8_t* pixels, Color8u c);
+	void addBlur(uint8_t* pixels);
+	void hands(uint8_t* pixels);
+
 private:
 	Surface* mySurface_;
 	int frame_number_;
@@ -43,14 +47,55 @@ void HomeWork01App::setup()
 
 void HomeWork01App::mouseDown( MouseEvent event )
 {
+	console() << event.getX()<<endl;
 }
 
-void HomeWork01App::drawInvertCircle(uint8_t* pixles, int r)
+void HomeWork01App::drawInvertCircle(uint8_t* pixels, int center_x, int center_y, int r, Color8u c)
 {
-	if(r<=0) return;
+	if(r <= 0) return;
 
-	int r2 = r*r;
+	for(int y=center_y-r; y<=center_y+r; y++){
+		for(int x=center_x-r; x<=center_x+r; x++){
 
+
+			if((y < 0 || x < 0 || x >= kAppWidth || y >= kAppHeight)) break;
+
+			int dist = (int)sqrt((double)((x-center_x)*(x-center_x) + (y-center_y)*(y-center_y)));
+
+			if(dist <= r)
+			{
+
+				int curBlock = 3*(x + y*kTextureSize);
+
+				pixels[curBlock] = 255-pixels[curBlock];
+				pixels[curBlock+1] = 255-pixels[curBlock+1];
+				pixels[curBlock+2] = 255-pixels[curBlock+2];
+
+			}
+		}
+	}
+
+
+}
+
+void HomeWork01App::addTint(uint8_t* pixels, Color8u c)
+{
+	Surface clonedSurface = (*mySurface_).clone();
+	uint8_t* clonedPixels = clonedSurface.getData();
+
+	int size =(kAppHeight+kAppWidth*kTextureSize);
+
+	for(int y=0; y<=kAppHeight; y++){
+
+		for(int x=0; x<=kAppWidth; x++){
+
+			int curBlock = 3*(x + y*kTextureSize);
+
+			pixels[curBlock] = clonedPixels[curBlock]/2+c.r/2;
+			pixels[curBlock+1] = clonedPixels[curBlock+1]/2+c.g/2;
+			pixels[curBlock+2] = clonedPixels[curBlock+2]/2+c.b/2;
+		}
+	}
 }
 
 void HomeWork01App::drawInvertSquares(uint8_t* pixles)
@@ -70,6 +115,7 @@ void HomeWork01App::drawInvertSquares(uint8_t* pixles)
 		}
 	}
 }
+
 /**
 *Gradient A.4
 **/
@@ -89,14 +135,21 @@ void HomeWork01App::fadingBackground(uint8_t* pixles)
 	}
 }
 
+void HomeWork01App::hands(uint8_t* pixles)
+{
+
+}
 void HomeWork01App::update()
 {
 	uint8_t* dataArray = (*mySurface_).getData();
 	Color8u fill1 = Color8u(128,128,192);
+	Color8u tint = Color8u(255,0,0);
 
 	fadingBackground(dataArray);
 	drawInvertSquares(dataArray);
-
+	drawInvertCircle(dataArray, kAppWidth/2, kAppHeight/2, 200, fill1);
+	drawInvertCircle(dataArray, kAppWidth/2, kAppHeight/2, 5, fill1);
+	addTint(dataArray, tint);
 	frame_number_++;
 }
 
