@@ -23,6 +23,7 @@ public:
 	void addTint(uint8_t* pixels, Color8u c);
 	void addBlur(uint8_t* pixels);
 	void spinningHands(uint8_t* pixels);
+	void drawLine(int x1, int x2, int y1, int y2);
 
 private:
 	Surface* mySurface_;
@@ -60,6 +61,7 @@ void HomeWork01App::drawInvertCircle(uint8_t* pixels, int center_x, int center_y
 	if(r <= 0) return;
 
 	for(int y=center_y-r; y<=center_y+r; y++){
+
 		for(int x=center_x-r; x<=center_x+r; x++){
 
 
@@ -72,9 +74,9 @@ void HomeWork01App::drawInvertCircle(uint8_t* pixels, int center_x, int center_y
 				int curBlock = 3*(x + y*kTextureSize);
 
 				//Invert color by 255-current pixels
-				pixels[curBlock] = 255-pixels[curBlock];
-				pixels[curBlock+1] = 255-pixels[curBlock+1];
-				pixels[curBlock+2] = 255-pixels[curBlock+2];
+				pixels[3*(x+y*kTextureSize)]   = abs(sin(frame_number_*.03f))*255;
+				pixels[3*(x+y*kTextureSize)+1] = abs(sin(frame_number_*.05f))*255;
+				pixels[3*(x+y*kTextureSize)+2] = abs(sin(frame_number_*.04f))*255;
 
 			}
 		}
@@ -105,9 +107,9 @@ void HomeWork01App::drawInvertSquares(uint8_t* pixels, int side)
 	//Draw a rectangle. I'll make this rectangle be the inverted color of the BG
 	int x,y;
 
-	for(y=side; y < kAppHeight-side; y++)
+	for(y=kAppHeight/2-side; y < kAppHeight/2+side; y++)
 	{
-		for(x=side; x < kAppWidth-side; x++)
+		for(x=kAppWidth/2-side; x < kAppWidth/2+side; x++)
 		{
 			int offset = 3*(x+y*kTextureSize);
 			pixels[offset]   = 255-pixels[offset];
@@ -129,9 +131,7 @@ void HomeWork01App::fadingBackground(uint8_t* pixels)
 	{
 		for(x=0; x<kAppWidth; x++)
 		{
-			pixels[3*(x+y*kTextureSize)]   = abs(sin(frame_number_*.03f))*255;
-			pixels[3*(x+y*kTextureSize)+1] = abs(sin(frame_number_*.05f))*255;
-			pixels[3*(x+y*kTextureSize)+2] = abs(sin(frame_number_*.04f))*255;
+
 		}
 	}
 }
@@ -141,7 +141,7 @@ void HomeWork01App::spinningHands(uint8_t* pixels)
 	int spinnerLength = kCircleRadius_;
 
 	time_t now = time(0);
-	
+
 	tm *ltm = localtime(&now);
 
 	rotate_pos_ = (ltm->tm_sec/30.0)+.25;
@@ -150,15 +150,15 @@ void HomeWork01App::spinningHands(uint8_t* pixels)
 	int startx = kAppWidth/2;
 	int starty = kAppHeight/2;
 
-	for(int x=startx-spinnerLength; x<startx+spinnerLength; x++)
-	{
 		for(int y=starty-spinnerLength; y<starty+spinnerLength; y++)
+	{
+		for(int x=startx-spinnerLength; x<startx+spinnerLength; x++)
 		{
 			double denominator = x-startx;
 			double currentSlope = y-starty;
 
 			int dist = (int)sqrt((double)(denominator*denominator+currentSlope*currentSlope));
-			
+
 			if(dist<=spinnerLength)
 			{
 				currentSlope =  currentSlope/denominator;
@@ -176,6 +176,47 @@ void HomeWork01App::spinningHands(uint8_t* pixels)
 			}
 		}
 	}
+}
+/**
+ *Retrived sudo code from wiki - http://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm
+ **/
+void HomeWork01App::drawLine(int x1, int x2, int y1, int y2)
+{
+     bool steep = abs(y2 - y1) > abs(x2 - x1);
+
+     if(steep)
+	 {
+         swap(x2, y2);
+         swap(x1, y1);
+	 }
+
+     if (x2 > x1)
+	 {
+         swap(x2, x1);
+         swap(y2, y1);
+	 }
+
+     int deltax = x2 - x1;
+     int deltay = abs(y2 - y1);
+     int error = deltax/2;
+     
+     int ystep;
+     int y = y1;
+
+     ystep = (y1 < y2) ? 1 : -1;
+
+     for (int x=x1; x<x2; x++)
+	 {
+         (steep) ? plot(y,x) : plot(x,y);
+
+         error = error + deltaerr;
+         if (error >= 0.5) then
+             y := y + ystep
+error := error - 1.0
+	 }
+}
+void plot(int x, int y)
+{
 
 }
 
