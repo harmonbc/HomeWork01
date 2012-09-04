@@ -189,7 +189,7 @@ void HomeWork01App::drawLine(uint8_t* pixels, int startx, int starty, int length
 
 	int flipUnit = (maxUnits == 60) ? 30 : 6;
 
-	bool rightSegment = units<maxUnits;
+	bool rightSegment = units<flipUnit;
 
 	for(int x=startx-length; x<startx+length; x++)
 	{
