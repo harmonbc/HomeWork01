@@ -23,7 +23,8 @@ public:
 	void addTint(uint8_t* pixels, Color8u c);
 	void addBlur(uint8_t* pixels);
 	void spinningHands(uint8_t* pixels);
-	void drawLine(int x1, int x2, int y1, int y2);
+	void drawLine(uint8_t* pixels,int x1, int x2, int y1, int y2, int width);
+	void setPixel(uint8_t* pixels,int x, int y, int width);
 
 private:
 	Surface* mySurface_;
@@ -150,7 +151,7 @@ void HomeWork01App::spinningHands(uint8_t* pixels)
 	int startx = kAppWidth/2;
 	int starty = kAppHeight/2;
 
-		for(int y=starty-spinnerLength; y<starty+spinnerLength; y++)
+	for(int y=starty-spinnerLength; y<starty+spinnerLength; y++)
 	{
 		for(int x=startx-spinnerLength; x<startx+spinnerLength; x++)
 		{
@@ -178,46 +179,50 @@ void HomeWork01App::spinningHands(uint8_t* pixels)
 	}
 }
 /**
- *Retrived sudo code from wiki - http://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm
- **/
-void HomeWork01App::drawLine(int x1, int x2, int y1, int y2)
+*Retrived sudo code from wiki - http://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm
+**/
+void HomeWork01App::drawLine(uint8_t* pixels, int x0, int x1, int y0, int y1, int width)
 {
-     bool steep = abs(y2 - y1) > abs(x2 - x1);
 
-     if(steep)
-	 {
-         swap(x2, y2);
-         swap(x1, y1);
-	 }
+	int dx = abs(x1-x0);
+	int dy = abs(y1-y0);
+	int sx = (x0 < x1) ? 1 : -1;
+	int sy = (y0 < y1) ? 1 : -1;
+	int err = dx-dy;
 
-     if (x2 > x1)
-	 {
-         swap(x2, x1);
-         swap(y2, y1);
-	 }
+	for(int x = x0; x<x1; x++)
+	{
+		setPixel(x0,y0,width);
 
-     int deltax = x2 - x1;
-     int deltay = abs(y2 - y1);
-     int error = deltax/2;
-     
-     int ystep;
-     int y = y1;
+		if ((x0 == x1)&&(y0 = y1))
+			break;
 
-     ystep = (y1 < y2) ? 1 : -1;
+		int e2 = 2*err;
 
-     for (int x=x1; x<x2; x++)
-	 {
-         (steep) ? plot(y,x) : plot(x,y);
+		if (e2 > -dy)
+		{
+			err = err - dy;
+			x0 = x0 + sx;
+		}
+		if (e2 <  dx)
+		{
+			err = err + dx;
+			y0 = y0 + sy;
+		}
+	}
 
-         error = error + deltaerr;
-         if (error >= 0.5) then
-             y := y + ystep
-error := error - 1.0
-	 }
+
 }
-void plot(int x, int y)
+void setPixel(uint8_t* pixels, int x, int y, int width)
 {
-
+	int halfWidth = (width<2)?1:width/2;
+	for(int i=x-halfWidth;i<x+halfWidth;x++)
+	{
+		int offset = 3*(i+y*kTextureSize);
+		pixels[offset] = 0;
+		pixels[offset+1] = 0;
+		pixels[offset+2] = 0;
+	}
 }
 
 void HomeWork01App::update()
