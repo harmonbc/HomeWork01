@@ -18,18 +18,19 @@ public:
 	void draw();
 	void prepareSettings(Settings* settings);
 	void fadingBackground(uint8_t* pixels);
-	void drawInvertSquares(uint8_t* pixels);
+	void drawInvertSquares(uint8_t* pixels, int side);
 	void drawInvertCircle(uint8_t* pixels, int center_x, int center_y, int r);
-	void drawCircle(uint8_t* pixels, int center_x, int center_y, int r, Color8u c);
-	void drawLine(uint8_t* pixels, int startx, int starty, int length, Color8u c, int units, int maxUnits);
 	void addTint(uint8_t* pixels, Color8u c);
 	void addBlur(uint8_t* pixels);
-	void hands(uint8_t* pixels);
+	void spinningHands(uint8_t* pixels);
 
 private:
 	Surface* mySurface_;
 	int frame_number_;
+	int hand_position;
 	int kCircleRadius_;
+	bool rotate_clockwise_;
+	double rotate_pos_;
 };
 static const int kAppWidth=800;
 static const int kAppHeight=600;
@@ -46,6 +47,7 @@ void HomeWork01App::setup()
 	mySurface_ = new Surface(kTextureSize,kTextureSize,false);
 	frame_number_ = 0;
 	kCircleRadius_ = 200;
+	rotate_pos_ = 1;
 }
 
 void HomeWork01App::mouseDown( MouseEvent event )
@@ -78,34 +80,10 @@ void HomeWork01App::drawInvertCircle(uint8_t* pixels, int center_x, int center_y
 		}
 	}
 }
-void HomeWork01App::drawCircle(uint8_t* pixels, int center_x, int center_y, int r, Color8u c)
-{
-	if(r <= 0) return;
-
-	for(int y=center_y-r; y<=center_y+r; y++){
-		for(int x=center_x-r; x<=center_x+r; x++){
-
-			if(y < 0 || x < 0 || x >= kAppWidth || y >= kAppHeight) break;
-
-			int dist = (int)sqrt((double)((x-center_x)*(x-center_x) + (y-center_y)*(y-center_y)));
-
-			if(dist <= r)
-			{
-				int curBlock = 3*(x + y*kTextureSize);
-
-				pixels[curBlock] = c.r;
-				pixels[curBlock+1] = c.g;
-				pixels[curBlock+2] = c.b;
-
-			}
-		}
-	}
-}
 
 void HomeWork01App::addTint(uint8_t* pixels, Color8u c)
 {
-	Surface clonedSurface = (*mySurface_).clone();
-	uint8_t* clonedPixels = clonedSurface.getData();
+
 
 	int size =(kAppHeight+kAppWidth*kTextureSize);
 
@@ -115,25 +93,26 @@ void HomeWork01App::addTint(uint8_t* pixels, Color8u c)
 		{
 			int curBlock = 3*(x + y*kTextureSize);
 
-			pixels[curBlock] = clonedPixels[curBlock]/2+c.r/2;
-			pixels[curBlock+1] = clonedPixels[curBlock+1]/2+c.g/2;
-			pixels[curBlock+2] = clonedPixels[curBlock+2]/2+c.b/2;
+			pixels[curBlock] = pixels[curBlock]/2+c.r/2;
+			pixels[curBlock+1] = pixels[curBlock+1]/2+c.g/2;
+			pixels[curBlock+2] = pixels[curBlock+2]/2+c.b/2;
 		}
 	}
 }
 
-void HomeWork01App::drawInvertSquares(uint8_t* pixels)
+void HomeWork01App::drawInvertSquares(uint8_t* pixels, int side)
 {
 	//Draw a rectangle. I'll make this rectangle be the inverted color of the BG
 	int x,y;
 
-	for(y=30; y < kAppHeight-30; y++)
+	for(y=side; y < kAppHeight-side; y++)
 	{
-		for(x=30; x < kAppWidth-30; x++)
+		for(x=side; x < kAppWidth-side; x++)
 		{
-			pixels[3*(x+y*kTextureSize)]   = 255-pixels[3*(x+y*kTextureSize)];
-			pixels[3*(x+y*kTextureSize)+1] = 255-pixels[3*(x+y*kTextureSize)+1];
-			pixels[3*(x+y*kTextureSize)+2] = 255-pixels[3*(x+y*kTextureSize)+2];
+			int offset = 3*(x+y*kTextureSize);
+			pixels[offset]   = 255-pixels[offset];
+			pixels[offset+1] = 255-pixels[offset+1];
+			pixels[offset+2] = 255-pixels[offset+2];
 		}
 	}
 }
@@ -157,65 +136,47 @@ void HomeWork01App::fadingBackground(uint8_t* pixels)
 	}
 }
 
-void HomeWork01App::hands(uint8_t* pixels)
+void HomeWork01App::spinningHands(uint8_t* pixels)
 {
+	int spinnerLength = kCircleRadius_;
+
 	time_t now = time(0);
+	
 	tm *ltm = localtime(&now);
 
-	//get current time
-	int hours = ltm->tm_hour;
-	int mins = ltm->tm_min;
-	int seconds = ltm->tm_sec;
-	if(hours>12)
-		hours -= 12;
-	//set hands length
-	int minHand = kCircleRadius_;
-	int hourHand = minHand/2;
-	int secHand = (minHand+hourHand)/2;
+	rotate_pos_ = (ltm->tm_sec/30.0)+.25;
 
-	//Set Center Point
-	int centerX = (kAppWidth/2);
-	int centerY = (kAppHeight/2);
+	console() << rotate_pos_ << endl;
+	int startx = kAppWidth/2;
+	int starty = kAppHeight/2;
 
-	//drawLine(pixels, centerX, centerY, minHand, Color8u(0,0,0), mins, 60);
-	//drawLine(pixels, centerX, centerY, hourHand, Color8u(0,0,0), hours, 12);
-	drawLine(pixels, centerX, centerY, secHand, Color8u(0,0,0), seconds, 60);
-
-}
-
-void HomeWork01App::drawLine(uint8_t* pixels, int startx, int starty, int length, Color8u c, int units, int maxUnits)
-{
-	double slope = units/maxUnits;
-
-	int flipUnit = (maxUnits == 60) ? 30 : 6;
-
-	bool rightSegment = units<flipUnit;
-
-	for(int x=startx-length; x<startx+length; x++)
+	for(int x=startx-spinnerLength; x<startx+spinnerLength; x++)
 	{
-		for(int y=starty-length; y<starty+length; y++)
+		for(int y=starty-spinnerLength; y<starty+spinnerLength; y++)
 		{
 			double denominator = x-startx;
 			double currentSlope = y-starty;
 
-			currentSlope = (denominator!=0) ? currentSlope/denominator : 0;
-
-			if(abs (currentSlope-slope) <.01)
+			int dist = (int)sqrt((double)(denominator*denominator+currentSlope*currentSlope));
+			
+			if(dist<=spinnerLength)
 			{
-				if((rightSegment&&(x-startx>=0))||(!rightSegment&&(x-startx<=0)))
-				{
-					double distance = sqrt(pow(x-startx,2.0)-pow(y-starty,2.0))<=length;
+				currentSlope =  currentSlope/denominator;
 
-					if(true)//distance <=length)
-					{
-						pixels[3*(x+y*kTextureSize)]   = c.r;
-						pixels[3*(x+y*kTextureSize)+1] = c.g;
-						pixels[3*(x+y*kTextureSize)+2] = c.b;
-					}
+				if(abs(currentSlope-rotate_pos_)<.1)
+				{
+					int curBlock = 3*(x + y*kTextureSize);
+					Color8u c = Color8u(255,255,255);
+
+					pixels[curBlock] = c.r;
+					pixels[curBlock+1] = c.g;
+					pixels[curBlock+2] = c.b;
 				}
+
 			}
 		}
 	}
+
 }
 
 void HomeWork01App::update()
@@ -225,10 +186,10 @@ void HomeWork01App::update()
 	Color8u tint = Color8u(255,0,0);
 
 	fadingBackground(dataArray);
-	drawInvertSquares(dataArray);
+	drawInvertSquares(dataArray, kCircleRadius_);
 	drawInvertCircle(dataArray, kAppWidth/2, kAppHeight/2, kCircleRadius_);
 	addTint(dataArray, tint);
-	hands(dataArray);
+	spinningHands(dataArray);
 	frame_number_++;
 }
 
