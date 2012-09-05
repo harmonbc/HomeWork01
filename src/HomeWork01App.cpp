@@ -17,12 +17,14 @@ public:
 	void update();
 	void draw();
 	void prepareSettings(Settings* settings);
-	void drawInvertSquares(uint8_t* pixels, int side);
+
+	void drawSquare(uint8_t* pixels, int side, Color8u c);
 	void drawInvertCircle(uint8_t* pixels, int center_x, int center_y, int r);
+	void drawCircle(uint8_t* pixels, int center_x, int center_y, int r, Color8u c);
 	void addTint(uint8_t* pixels, Color8u c);
-	void addBlur(uint8_t* pixels);
 	void drawLine(uint8_t* pixels,int x1, int x2, int y1, int y2, int width);
 	void plot(uint8_t* pixels,int x, int y, int width);
+	void blur(uint8_t* pixels);
 
 private:
 	Surface* mySurface_;
@@ -35,6 +37,9 @@ private:
 	int xTwo;
 	int yOne;
 	int yTwo;
+	int circle_x;
+	int circle_y;
+	int circle2_x;
 
 	double rotate_pos_;
 };
@@ -55,8 +60,14 @@ void HomeWork01App::setup()
 	kCircleRadius_ = 200;
 	firstClick = false;
 	secondClick = false;
+	circle_x = 15;
+	circle_y = 15;
+	circle2_x = 0;
 }
 
+/**
+ *Satisfies A.6 mouse interaction
+ **/
 void HomeWork01App::mouseDown( MouseEvent event )
 {
 	if(firstClick && secondClick)
@@ -77,6 +88,9 @@ void HomeWork01App::mouseDown( MouseEvent event )
 	}
 }
 
+/**
+ *Satisfies A.2
+ **/
 void HomeWork01App::drawInvertCircle(uint8_t* pixels, int center_x, int center_y, int r)
 {
 	if(r <= 0) return;
@@ -103,7 +117,39 @@ void HomeWork01App::drawInvertCircle(uint8_t* pixels, int center_x, int center_y
 		}
 	}
 }
+/**
+ *Satisfies A.2
+ **/
+void HomeWork01App::drawCircle(uint8_t* pixels, int center_x, int center_y, int r, Color8u c)
+{
+	if(r <= 0) return;
 
+	for(int y=center_y-r; y<=center_y+r; y++){
+
+		for(int x=center_x-r; x<=center_x+r; x++){
+
+
+			if((y < 0 || x < 0 || x >= kAppWidth || y >= kAppHeight)) break;
+
+			int dist = (int)sqrt((double)((x-center_x)*(x-center_x) + (y-center_y)*(y-center_y)));
+
+			if(dist <= r)
+			{
+				int curBlock = 3*(x + y*kTextureSize);
+
+				//Invert color by 255-current pixels
+				pixels[3*(x+y*kTextureSize)]   = c.r;
+				pixels[3*(x+y*kTextureSize)+1] = c.g;
+				pixels[3*(x+y*kTextureSize)+2] = c.b;
+
+			}
+		}
+	}
+}
+
+/**
+ * Satisfies A.6, but is not implemented
+ **/
 void HomeWork01App::addTint(uint8_t* pixels, Color8u c)
 {
 
@@ -123,7 +169,10 @@ void HomeWork01App::addTint(uint8_t* pixels, Color8u c)
 	}
 }
 
-void HomeWork01App::drawInvertSquares(uint8_t* pixels, int side)
+/**
+ *Satisfies A.1
+ **/
+void HomeWork01App::drawSquare(uint8_t* pixels, int side, Color8u c)
 {
 	//Draw a rectangle. I'll make this rectangle be the inverted color of the BG
 	int x,y;
@@ -132,20 +181,28 @@ void HomeWork01App::drawInvertSquares(uint8_t* pixels, int side)
 	{
 		for(x=kAppWidth/2-side; x < kAppWidth/2+side; x++)
 		{
+			if(!(x<0||y<0||x>kAppWidth||y>kAppHeight))
+			{
+
 			int offset = 3*(x+y*kTextureSize);
-			pixels[offset]   = 255-pixels[offset];
-			pixels[offset+1] = 255-pixels[offset+1];
-			pixels[offset+2] = 255-pixels[offset+2];
+
+			pixels[offset]   = c.r;
+			pixels[offset+1] = c.g;
+			pixels[offset+2] = c.b;
+			}
 		}
 	}
 }
 
 
 /**
-*Retrived sudo code from wiki - http://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm
-**/
+ *Retrived sudo code from wiki - http://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm
+ *Satisfies A.3
+ **/
 void HomeWork01App::drawLine(uint8_t* pixels, int x0, int x1, int y0, int y1, int width)
 {
+	if(x0<0||y0<0||y1<0||x1<0||x0>kAppHeight||x1>kAppHeight||y1>kAppHeight||y0>kAppHeight||
+		x0>kAppWidth||x1>kAppWidth||y0>kAppWidth||y1>kAppWidth) return;
 	bool steep = abs(y1-y0) > abs(x1-x0);
 
 	if(steep)
@@ -186,12 +243,14 @@ void HomeWork01App::drawLine(uint8_t* pixels, int x0, int x1, int y0, int y1, in
 	}
 
 }
-
+/**
+ *Used for the line plotting
+ **/
 void HomeWork01App::plot(uint8_t* pixels, int x, int y, int width)
 {
-	int halfWidth = (width<2)?1:width/2;
+	//Cannot be an even number or lessthan 3
+	int halfWidth = (width<3) ? 1 : width/2;
 
-	console() << "PLOTTING " << x << " " << y << " " << width << endl;
 	int op1 = (width<3) ? 1 : (x-width);
 	int op2 = (width<3) ? 1 : (x+width);
 
@@ -204,19 +263,89 @@ void HomeWork01App::plot(uint8_t* pixels, int x, int y, int width)
 	}
 }
 
+/**
+ *Satisfies B.1
+ **/
+void HomeWork01App::blur(uint8_t* pixels)
+{
+	int x,y,p,q;
+	Surface clone = (*mySurface_).clone();
+	uint8_t* cloneP = clone.getData();
+
+	for(y = 1; y < kAppHeight; y++)
+	{
+		for(x = 1;  x < kAppWidth; x++)
+		{
+			int offset = 3*(x+y*kTextureSize);
+
+			pixels[offset] = pixels[offset]/9;
+			pixels[offset+1] = pixels[offset+1]/9;
+			pixels[offset+2] = pixels[offset+2]/9;
+			for(p = y-1; p < y+1; p++)
+			{
+				for(q = x-1; q<x+1; q++)
+				{
+					int offset2 = 3*(q+p*kTextureSize);
+
+					pixels[offset] += cloneP[offset2]/9;
+					pixels[offset+1] +=cloneP[offset2+1]/9;
+					pixels[offset+2] +=cloneP[offset2+2]/9;
+				}
+			}
+
+		}
+	}
+}
+
 void HomeWork01App::update()
 {
 	uint8_t* dataArray = (*mySurface_).getData();
 	Color8u fill1 = Color8u(128,128,192);
-	Color8u tint = Color8u(255,0,0);
 
-	drawInvertSquares(dataArray, kCircleRadius_);
+	Color8u face = Color8u(0,0,0);
+	Color8u white = Color8u(255,255,254);
+	drawSquare(dataArray, kAppHeight, white);
+	drawSquare(dataArray, (kAppWidth<kAppHeight) ? kAppWidth/2-30 : kAppHeight/2-30, fill1);
 	drawInvertCircle(dataArray, kAppWidth/2, kAppHeight/2, kCircleRadius_);
-	addTint(dataArray, tint);
+	/**
+	 *The following method calls just make a simple face
+	 **/
+	drawCircle(dataArray, kAppWidth/2-100, kAppHeight/2-50, 10, face);
+	drawCircle(dataArray, kAppWidth/2+100, kAppHeight/2-50, 10, face);
+	drawLine(dataArray, kAppWidth/2-150, kAppWidth/2+150, kAppHeight/2+30, kAppHeight/2+80, 5);
+	/**
+	 *The Following 2 method calls move a ball around the screen
+	 **/
+	drawInvertCircle(dataArray, circle_x, circle_y, 15);
+	drawCircle(dataArray, circle2_x, (sin(frame_number_+.0)*60)+500, 10, face);
 
+	blur(dataArray);
+	/**
+	*tint works, but I don't like it and did A.1, A.2, A.3, A.4, so it is not needed
+	**/
+	//addTint(dataArray, tint);
+	if(circle2_x<=kAppWidth-15)
+	{
+		circle2_x+=10;
+	}else{
+
+		circle2_x=15;
+	}
 	if(firstClick&&secondClick)
 	{
 		drawLine(dataArray,xOne, xTwo, yOne, yTwo, 5);
+	}
+	if(circle_y==15&&circle_x!=kAppWidth-15)
+	{
+		circle_x+=10;
+	}else if(circle_x==kAppWidth-15&&circle_y!=kAppHeight-15)
+	{
+		circle_y+=10;
+	}else if(circle_y==kAppHeight-15&&circle_x!=15)
+	{
+		circle_x-=10;
+	}else{
+		circle_y-=10;
 	}
 
 	frame_number_++;
@@ -224,7 +353,6 @@ void HomeWork01App::update()
 
 void HomeWork01App::draw()
 {
-	// clear out the window with black
 	gl::draw(*mySurface_); 
 }
 
