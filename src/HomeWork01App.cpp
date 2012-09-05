@@ -66,8 +66,8 @@ void HomeWork01App::setup()
 }
 
 /**
- *Satisfies A.6 mouse interaction
- **/
+*Satisfies A.6 mouse interaction
+**/
 void HomeWork01App::mouseDown( MouseEvent event )
 {
 	if(firstClick && secondClick)
@@ -89,8 +89,8 @@ void HomeWork01App::mouseDown( MouseEvent event )
 }
 
 /**
- *Satisfies A.2
- **/
+*Satisfies A.2
+**/
 void HomeWork01App::drawInvertCircle(uint8_t* pixels, int center_x, int center_y, int r)
 {
 	if(r <= 0) return;
@@ -118,8 +118,8 @@ void HomeWork01App::drawInvertCircle(uint8_t* pixels, int center_x, int center_y
 	}
 }
 /**
- *Satisfies A.2
- **/
+*Satisfies A.2
+**/
 void HomeWork01App::drawCircle(uint8_t* pixels, int center_x, int center_y, int r, Color8u c)
 {
 	if(r <= 0) return;
@@ -148,8 +148,8 @@ void HomeWork01App::drawCircle(uint8_t* pixels, int center_x, int center_y, int 
 }
 
 /**
- * Satisfies A.6, but is not implemented
- **/
+* Satisfies A.6, but is not implemented
+**/
 void HomeWork01App::addTint(uint8_t* pixels, Color8u c)
 {
 
@@ -170,8 +170,8 @@ void HomeWork01App::addTint(uint8_t* pixels, Color8u c)
 }
 
 /**
- *Satisfies A.1
- **/
+*Satisfies A.1
+**/
 void HomeWork01App::drawSquare(uint8_t* pixels, int side, Color8u c)
 {
 	//Draw a rectangle. I'll make this rectangle be the inverted color of the BG
@@ -184,11 +184,11 @@ void HomeWork01App::drawSquare(uint8_t* pixels, int side, Color8u c)
 			if(!(x<0||y<0||x>kAppWidth||y>kAppHeight))
 			{
 
-			int offset = 3*(x+y*kTextureSize);
+				int offset = 3*(x+y*kTextureSize);
 
-			pixels[offset]   = c.r;
-			pixels[offset+1] = c.g;
-			pixels[offset+2] = c.b;
+				pixels[offset]   = c.r;
+				pixels[offset+1] = c.g;
+				pixels[offset+2] = c.b;
 			}
 		}
 	}
@@ -196,9 +196,9 @@ void HomeWork01App::drawSquare(uint8_t* pixels, int side, Color8u c)
 
 
 /**
- *Retrived sudo code from wiki - http://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm
- *Satisfies A.3
- **/
+*Retrived sudo code from wiki - http://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm
+*Satisfies A.3
+**/
 void HomeWork01App::drawLine(uint8_t* pixels, int x0, int x1, int y0, int y1, int width)
 {
 	if(x0<0||y0<0||y1<0||x1<0||x0>kAppHeight||x1>kAppHeight||y1>kAppHeight||y0>kAppHeight||
@@ -244,8 +244,8 @@ void HomeWork01App::drawLine(uint8_t* pixels, int x0, int x1, int y0, int y1, in
 
 }
 /**
- *Used for the line plotting
- **/
+*Used for the line plotting
+**/
 void HomeWork01App::plot(uint8_t* pixels, int x, int y, int width)
 {
 	//Cannot be an even number or lessthan 3
@@ -264,8 +264,8 @@ void HomeWork01App::plot(uint8_t* pixels, int x, int y, int width)
 }
 
 /**
- *Satisfies B.1
- **/
+*Satisfies B.1
+**/
 void HomeWork01App::blur(uint8_t* pixels)
 {
 	int x,y,p,q;
@@ -308,14 +308,14 @@ void HomeWork01App::update()
 	drawSquare(dataArray, (kAppWidth<kAppHeight) ? kAppWidth/2-30 : kAppHeight/2-30, fill1);
 	drawInvertCircle(dataArray, kAppWidth/2, kAppHeight/2, kCircleRadius_);
 	/**
-	 *The following method calls just make a simple face
-	 **/
+	*The following method calls just make a simple face
+	**/
 	drawCircle(dataArray, kAppWidth/2-100, kAppHeight/2-50, 10, face);
 	drawCircle(dataArray, kAppWidth/2+100, kAppHeight/2-50, 10, face);
 	drawLine(dataArray, kAppWidth/2-150, kAppWidth/2+150, kAppHeight/2+30, kAppHeight/2+80, 5);
 	/**
-	 *The Following 2 method calls move a ball around the screen
-	 **/
+	*The Following 2 method calls move a ball around the screen
+	**/
 	drawInvertCircle(dataArray, circle_x, circle_y, 15);
 	drawCircle(dataArray, circle2_x, (sin(frame_number_+.0)*60)+500, 10, face);
 
